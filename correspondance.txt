@@ -1,0 +1,4 @@
+1 = rouge pois blancs
+2 = violette tachee pattes vertes
+3 = bougies (brune orangee pattes bleues)
+4 = zebre

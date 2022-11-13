@@ -1,0 +1,8 @@
+Idées :
+
+1° Trier les (cartes + orientations) en fonctions des côtés qu'ils offrent, des "coins" qu'ils offrent, et des ensembles de 3 côtés qu'ils offrent
+
+Puis les assembler en backtracking
+
+2° Trier les ensembles de 2 cartes assemblées en fonction des côtés de 2, des côtés de 2 + 1, qu'ils offrent
+Et pareil
