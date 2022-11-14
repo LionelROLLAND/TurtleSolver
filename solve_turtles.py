@@ -8,7 +8,7 @@ import cplex
 from cplex_errors_mgmt import CODES, error_str
 from utils import var_name, border_name
 from data_structures import Card, CardPool, vCard, ExtMap
-from GUI import card_selection, select_solve_mode, final_pattern
+from GUI import card_selection, select_nb_cards, select_solve_mode, final_pattern
 
 
 DIR_CARDS = 'cards'
@@ -89,8 +89,8 @@ def full_solve(): # Next step : choosing the number of each card and reducing th
     cp, var_dict = modelize(rot_cards, pattern)
     cp.solve()
     rcode = cp.solution.get_status()
-    print(rcode)
-    print(cp.solution.get_status_string())
+    # print(rcode)
+    # print(cp.solution.get_status_string())
     if (
         rcode != CODES['MIP_OPTIMAL']
         and rcode != CODES['MIP_TOL_OPTIMAL']
@@ -110,4 +110,6 @@ def full_solve(): # Next step : choosing the number of each card and reducing th
 
 
 if __name__ == '__main__':
-    full_solve()
+    # full_solve()
+    subset = card_selection(get_full_list())
+    print(select_nb_cards(subset))

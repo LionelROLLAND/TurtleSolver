@@ -23,6 +23,9 @@ class Card:
     def __str__(self):
         return self.name
     
+    def __repr__(self):
+        return str(self)
+    
     @classmethod
     def from_dict(cls, d:dict):
         im_filename = d.get('im_filename', '')
@@ -84,6 +87,9 @@ class CardPool:
     def __str__(self):
         return self.name
     
+    def __repr__(self):
+        return str(self)
+    
     def rotate_card(self, idx:int, turns:int=1):
         return self.v_card_list[(idx+turns) % self.sym_ind]
     
@@ -103,6 +109,9 @@ class vCard:
     
     def __str__(self):
         return self.name
+    
+    def __repr__(self):
+        return str(self)
     
     def __getitem__(self, key):
         assert key == (1,0) or key == (0,1) or key == (-1,0) or key == (0,-1)

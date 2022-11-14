@@ -1,0 +1,4 @@
+cplex
+Pillow
+sv-ttk
+ttkthemes

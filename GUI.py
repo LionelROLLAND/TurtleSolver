@@ -1,3 +1,4 @@
+import typing
 from tkinter import Tk, ttk, Canvas
 from tkinter import TOP, BOTTOM, LEFT, RIGHT, VERTICAL, HORIZONTAL, N, S, W, E, NW, SE, SW, CENTER
 from tkinter import PhotoImage
@@ -47,6 +48,42 @@ class SelectionFrame(ttk.Frame):
         return [e.card for e in self.winfo_children() if e.instate(('selected',))]
 
 
+class NbCardsFrame(ttk.Frame):
+    def __init__(self, master, columns=5, padding=0):
+        super().__init__(master, padding=padding)
+        self.columns = columns
+        self.nb_widgets = 0
+        self.grid()
+    
+    def get_cards_nb_list(self):
+        return [(e.card, e.get_field_value()) for e in self.winfo_children()]
+
+
+
+class SelNbCard(ttk.Frame):
+    def __init__(self, master, c:Card, img:ImageTk.PhotoImage, padding:int=30):
+        super().__init__(master, padding=padding)
+        self.grid()
+        self.card = c
+        self.picture = ttk.Label(self, image=img)
+        self.picture.grid(row=0, column=0)
+        field_values = list(map(str, range(1, 11)))
+        self.field = ttk.Combobox(self, values=field_values)
+        self.field.grid(row=1, column=0)
+        self.field.set("1")
+    
+    def get_field_value(self):
+        return int(self.field.get())
+    
+    @classmethod
+    def on_NbCardsFrame(self, master, c:Card, img:ImageTk.PhotoImage, padding:int=30):
+        res = SelNbCard(master, c, img, padding)
+        res.grid(column=master.nb_widgets % master.columns, row=master.nb_widgets // master.columns)
+        master.nb_widgets += 1
+        return res
+
+
+
 def card_selection(full_list):
     root = Tk()
     root.title("Vous n'imaginez pas tout ce que tkinter peut faire pour vous")
@@ -54,7 +91,7 @@ def card_selection(full_list):
     # sv_ttk.set_theme("dark")
     frm = ttk.Frame(root, padding=30)
     frm.grid()
-    can = Canvas(frm, height=int(2 * IMG_SIDE), confine=True, background='#000000')
+    can = Canvas(frm, confine=True, background='#000000')
     can.grid(column=0, row=0)
     sbar = ttk.Scrollbar(frm, orient=VERTICAL, command=can.yview)
     sbar.grid(column=1, row=0, sticky=N+S)
@@ -75,14 +112,48 @@ def card_selection(full_list):
         trick_garbage_collector.append(c.get_tk_img())
         new_button = CardButton.on_SelectionFrame(select, c, trick_garbage_collector[-1])
         new_button['command'] = new_button.switch_select
-    button_width = new_button.winfo_reqwidth()
-    button_height = new_button.winfo_reqheight()
-    total_width = button_width * min(select.nb_widgets, select.columns) + 2 * pad_select
-    total_height = button_height * (select.nb_widgets // select.columns + 1) + 2 * pad_select
-    can['width'] = total_width
-    can['scrollregion'] = (0, 0, total_width, total_height)
+    root.update_idletasks()
+    can['width'] = select.winfo_reqwidth()
+    can['height'] = min(2 * IMG_SIDE, select.winfo_reqheight())
+    can['scrollregion'] = (0, 0, select.winfo_reqwidth(), select.winfo_reqheight())
     root.mainloop()
     return subset
+
+
+def select_nb_cards(subset:typing.List[Card]):
+    root = Tk()
+    root.title("Vous n'imaginez pas tout ce que tkinter peut faire pour vous")
+    ttkthemes.ThemedStyle(root, theme="adapta")
+    # sv_ttk.set_theme("dark")
+    frm = ttk.Frame(root, padding=30)
+    frm.grid()
+    can = Canvas(frm, confine=True, background='#000000')
+    can.grid(column=0, row=0)
+    sbar = ttk.Scrollbar(frm, orient=VERTICAL, command=can.yview)
+    sbar.grid(column=1, row=0, sticky=N+S)
+    can['yscrollcommand'] = sbar.set
+    pad_select = 30
+
+    nb_cards_frm = NbCardsFrame(can, columns=3, padding=pad_select)
+    can.create_window(0, 0, anchor=NW, window=nb_cards_frm)
+    tuning_list = []
+    def endTuning():
+        for e in nb_cards_frm.get_cards_nb_list():
+            tuning_list.append(e)
+        root.destroy()
+    sep = ttk.Separator(frm, orient=HORIZONTAL)
+    sep.grid(column=0, row=1, sticky=E+W)
+    ttk.Button(frm, text="Ok", command=endTuning).grid(column=0, row=2)
+    trick_garbage_collector = []
+    for c in subset:
+        trick_garbage_collector.append(c.get_tk_img())
+        new_tuning_frm = SelNbCard.on_NbCardsFrame(nb_cards_frm, c, trick_garbage_collector[-1])
+    root.update_idletasks()
+    can['width'] = nb_cards_frm.winfo_reqwidth()
+    can['height'] = min(2 * IMG_SIDE, nb_cards_frm.winfo_reqheight())
+    can['scrollregion'] = (0, 0, nb_cards_frm.winfo_reqwidth(), nb_cards_frm.winfo_reqheight())
+    root.mainloop()
+    return tuning_list
 
 
 def select_solve_mode(nb_cards:int):
@@ -130,7 +201,7 @@ def select_solve_mode(nb_cards:int):
 
 def final_pattern(var_name_list, var_dict, max_side:int=900):
     card_key_tuples = var_names_to_tuples(var_name_list)
-    print(card_key_tuples)
+    # print(card_key_tuples)
     mx = min(card_key_tuples, key=(lambda x: x[1][0]))[1][0]
     Mx = max(card_key_tuples, key=(lambda x: x[1][0]))[1][0]
     my = min(card_key_tuples, key=(lambda x: x[1][1]))[1][1]
