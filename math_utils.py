@@ -59,3 +59,15 @@ def keep_configs(init_config) -> int:
         i += 1
         config = rotate_config(config)
     return i
+
+
+def pgcd(a, b):
+    p = max(abs(a), abs(b))
+    q = min(abs(a), abs(b))
+    if q == 0:
+        return p
+    return pgcd(q, p % q)
+
+
+def ppcm(a, b):
+    return abs(a * b) // pgcd(a, b)

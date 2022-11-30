@@ -9,6 +9,7 @@ from cplex_errors_mgmt import CODES, error_str
 from utils import var_name, border_name
 from data_structures import Card, CardPool, vCard, ExtMap
 from GUI import card_selection, select_nb_cards, select_solve_mode, final_pattern
+from math_utils import ppcm, pgcd
 
 
 DIR_CARDS = 'cards'
@@ -17,7 +18,15 @@ DIR_CARDS = 'cards'
 def get_full_list(dir=DIR_CARDS) -> typing.Tuple[Card]:
     res = []
     for entry in os.listdir(dir):
-        res.append(Card.from_file(os.path.join(dir, entry)))
+        new_card = Card.from_file(os.path.join(dir, entry))
+        is_in_res = False
+        for c in res:
+            if new_card == c:
+                c.number += 1
+                is_in_res = True
+                break
+        if not(is_in_res):
+            res.append(new_card)
     return res
 
 
@@ -84,8 +93,18 @@ def modelize(rot_cards:typing.List[CardPool], pattern:map):
 
 def full_solve(): # Next step : choosing the number of each card and reducing the number of variables by taking symmetries into account
     subset = card_selection(get_full_list())
-    pattern = ExtMap(select_solve_mode(len(subset)))
-    rot_cards = [CardPool(c) for c in subset]
+    nb_subset = select_nb_cards(subset)
+    tot_nb_cards = sum([c.number for c in nb_subset])
+    pattern = ExtMap(select_solve_mode(tot_nb_cards))
+    rot_cards = [CardPool(c) for c in nb_subset]
+
+    sym_reducer = False
+    for c in rot_cards:
+        if ppcm(c.sym_ind, pattern.ind_sym) == 4:
+            c.constrains_rot(pgcd(pattern.ind_sym, c.sym_ind))
+            sym_reducer = True
+            break
+
     cp, var_dict = modelize(rot_cards, pattern)
     cp.solve()
     rcode = cp.solution.get_status()
@@ -110,6 +129,6 @@ def full_solve(): # Next step : choosing the number of each card and reducing th
 
 
 if __name__ == '__main__':
-    # full_solve()
-    subset = card_selection(get_full_list())
-    print(select_nb_cards(subset))
+    full_solve()
+    # subset = card_selection(get_full_list())
+    # print(select_nb_cards(subset))

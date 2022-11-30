@@ -56,7 +56,9 @@ class NbCardsFrame(ttk.Frame):
         self.grid()
     
     def get_cards_nb_list(self):
-        return [(e.card, e.get_field_value()) for e in self.winfo_children()]
+        for e in self.winfo_children():
+            e.card.number = e.get_field_value()
+        return [e.card for e in self.winfo_children()]
 
 
 
@@ -65,12 +67,12 @@ class SelNbCard(ttk.Frame):
         super().__init__(master, padding=padding)
         self.grid()
         self.card = c
-        self.picture = ttk.Label(self, image=img)
+        self.picture = ttk.Label(self, text=c.name, image=img, compound=TOP)
         self.picture.grid(row=0, column=0)
         field_values = list(map(str, range(1, 11)))
         self.field = ttk.Combobox(self, values=field_values)
         self.field.grid(row=1, column=0)
-        self.field.set("1")
+        self.field.set(str(c.number))
     
     def get_field_value(self):
         return int(self.field.get())

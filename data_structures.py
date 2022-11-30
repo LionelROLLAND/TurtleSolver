@@ -9,11 +9,10 @@ from math_utils import rotate_config, keep_configs
 IMG_SIDE = 300
 
 class Card:
-    def __init__(self, config:typing.Tuple[int], name:str="", img:typing.Union[Image.Image,None]=None):
-        self.up = config[0]
-        self.left = config[1]
-        self.down = config[2]
-        self.right = config[3]
+    def __init__(self, config:typing.Tuple[int], number:int=1,
+    name:str="", img:typing.Union[Image.Image,None]=None):
+        self.up, self.left, self.down, self.right = config
+        self.number = number
         self.name = name
         if img is not None:
             self.img = img
@@ -32,9 +31,9 @@ class Card:
         if im_filename != '':
             norm_fname = os.path.normpath(im_filename)
             with Image.open(norm_fname) as im:
-                return Card(d['config'], d.get('name', ""), im.copy())
+                return Card(d['config'], 1, d.get('name', ""), im.copy())
         else:
-            return Card(d['config'], d.get('name', ""))
+            return Card(d['config'], 1, d.get('name', ""))
     
     @classmethod
     def from_file(cls, fname:os.PathLike):
@@ -56,7 +55,9 @@ class Card:
             json.dump(self.to_dict(im_fname), fd)
     
     def get_tk_img(self, size=(IMG_SIDE, IMG_SIDE)):
-        return ImageTk.PhotoImage(self.img.resize(size))
+        if self.img is not None:
+            return ImageTk.PhotoImage(self.img.resize(size))
+        return ImageTk.PhotoImage(Image.new('RGB', (1,1)))
     
     def copy(self):
         return Card(self.get_config(), self.name, self.img.copy())
@@ -67,14 +68,25 @@ class Card:
     def rotate(self, turns:int=1):
         new_conf = rotate_config(self.get_config(), turns % 4)
         return Card(new_conf, self.name, self.img.rotate((turns % 4) * 90))
-
+    
+    def __eq__(self, c):
+        conf = self.get_config()
+        other_conf = c.get_config()
+        for i in range(4):
+            if conf == other_conf:
+                return True
+        return False
+    
+    def __neq__(self, c):
+        return not(self == c)
+            
 
 class CardPool:
     nb_cp = 0
-    def __init__(self, c:Card, n:int=1):
+    def __init__(self, c:Card):
         CardPool.nb_cp += 1
         self.id = CardPool.nb_cp
-        self.number = n
+        self.number = c.number
         self.parent = c
         config = c.get_config()
         self.sym_ind = keep_configs(config)
@@ -83,6 +95,7 @@ class CardPool:
         for i in range(self.sym_ind):
             self.v_card_list.append( vCard(parent=self, config=config, idx=i) )
             config = rotate_config(config)
+        self.rot_cons = min(4, self.sym_ind)
     
     def __str__(self):
         return self.name
@@ -93,8 +106,11 @@ class CardPool:
     def rotate_card(self, idx:int, turns:int=1):
         return self.v_card_list[(idx+turns) % self.sym_ind]
     
+    def constrains_rot(self, allowed_rots:int=4):
+        self.rot_cons = min(self.rot_cons, allowed_rots)
+    
     def __iter__(self):
-        return self.v_card_list.__iter__()
+        return self.v_card_list[0:self.rot_cons].__iter__()
 
 
 class vCard:
@@ -131,18 +147,18 @@ class ExtMap:
         self.Mx = max(d, key=(lambda x: x[0]))[0]
         self.my = min(d, key=(lambda x: x[1]))[1]
         self.My = min(d, key=(lambda x: x[1]))[1]
-        self.ind_sym = 4
+        self.ind_sym = 1
         dil_map = {}
         for key in d:
             dil_map[(2 * key[0] - self.mx - self.Mx, 2 * key[1] - self.my - self.My)] = True
         for key in dil_map:
             if not dil_map.get((-key[1], key[0]), False):
-                self.ind_sym = 1
+                self.ind_sym = 2
                 break
-        if self.ind_sym > 2:
+        if self.ind_sym >= 2:
             for key in dil_map:
                 if not dil_map.get((-key[0], -key[1]), False):
-                    self.ind_sym = 2
+                    self.ind_sym = 4
                     break
 
 
